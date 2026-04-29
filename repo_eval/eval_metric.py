@@ -10,9 +10,40 @@ from fuzzywuzzy import fuzz
 import editdistance
 from functools import partial
 import torch.multiprocessing as mp
-from tree_sitter import Language, Parser
 from typing import List, Callable, Union
-from tree_sitter.binding import Node as TSNode
+
+try:
+    from tree_sitter import Language, Parser
+    from tree_sitter.binding import Node as TSNode
+    _NEW_TS_API = False
+except (ImportError, AttributeError):
+    from tree_sitter import Language, Parser
+    try:
+        from tree_sitter import Node as TSNode
+    except ImportError:
+        TSNode = object
+    _NEW_TS_API = True
+
+
+def _make_parser(ts_lib, lang_name):
+    """Create a tree-sitter Parser, compatible with both old and new API."""
+    ts_lang = 'c_sharp' if lang_name == 'csharp' else lang_name
+    if _NEW_TS_API:
+        import importlib
+        _lang_modules = {
+            'python': 'tree_sitter_python',
+            'java': 'tree_sitter_java',
+            'typescript': 'tree_sitter_typescript',
+            'c_sharp': 'tree_sitter_c_sharp',
+        }
+        mod = importlib.import_module(_lang_modules[ts_lang])
+        language = Language(mod.language())
+        p = Parser(language)
+    else:
+        language = Language(ts_lib, ts_lang)
+        p = Parser()
+        p.set_language(language)
+    return p
 
 parser = None
 
@@ -222,13 +253,10 @@ def compute_metric_stmt(args):
         print('Warning: len(samples) ({}) == len(examples) ({})'.format(len(samples), len(examples)))
 
     global parser
-    # language = Language(args.ts_lib, "python")
     ts_lang = args.language
     if ts_lang == 'csharp':
         ts_lang = 'c_sharp'
-    language = Language(args.ts_lib, ts_lang)
-    parser = Parser()
-    parser.set_language(language)
+    parser = _make_parser(args.ts_lib, args.language)
 
     truncated_samples = []
     print("post-processing samples ...")
@@ -340,9 +368,7 @@ def compute_metric_stmt_custom(predictions_file, prompt_file, output_dir,
     assert len(samples) == len(examples), f"{len(samples)} != {len(examples)}"
 
     global parser
-    language = Language(ts_lib, "python")
-    parser = Parser()
-    parser.set_language(language)
+    parser = _make_parser(ts_lib, 'python')
 
     truncated_samples = []
     print("post-processing samples ...")

@@ -3,7 +3,6 @@ from functools import partial
 
 import torch.multiprocessing as mp
 from tqdm import tqdm
-from tree_sitter import Language, Parser
 
 from cceval_utils import (
     postprocess_code_lines,
@@ -11,7 +10,7 @@ from cceval_utils import (
     cal_edit_sim,
     remove_comments
 )
-from eval_metric import cal_edit_sim_repoeval
+from eval_metric import cal_edit_sim_repoeval, _make_parser
 
 parser = None
 
@@ -93,10 +92,7 @@ def compute_metric_stmt_cceval(args):
     assert len(samples) == len(examples), f"{len(samples)} != {len(examples)}"
 
     global parser
-    ts_lang = "c_sharp" if args.language == "csharp" else args.language
-    language = Language(args.ts_lib, ts_lang)
-    parser = Parser()
-    parser.set_language(language)
+    parser = _make_parser(args.ts_lib, args.language)
 
     truncated_samples = []
     em_labels = []

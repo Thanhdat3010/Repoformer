@@ -7,7 +7,7 @@
 set -e
 
 # ---- 1. Cài PyTorch (CUDA 12.1) ----
-pip install torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121
+pip install torch==2.4.1 torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cu121
 
 # ---- 2. Cài transformers + accelerate ----
 pip install "transformers>=4.45.0" accelerate datasets
@@ -16,8 +16,7 @@ pip install "transformers>=4.45.0" accelerate datasets
 pip install tree-sitter==0.21.3 timeout-decorator editdistance
 pip install bitsandbytes scikit-learn rank-bm25
 pip install fuzzywuzzy python-Levenshtein nltk sacrebleu sentencepiece
-pip install tensorboard gputil jsonlines codebleu
-pip install pytorch-lightning==1.6.5 deepspeed numpy
+pip install tensorboard gputil jsonlines codebleu numpy
 
 # ---- 4. Build tree-sitter parsers ----
 bash ts_package/build_treesitter.sh
