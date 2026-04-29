@@ -19,6 +19,9 @@ py_model_zoo["starcoderbase"]="bigcode/starcoderbase"
 py_model_zoo["starcoderbase-7b"]="bigcode/starcoderbase-7b"
 py_model_zoo["starcoderbase-3b"]="bigcode/starcoderbase-3b"
 py_model_zoo["starcoderbase-1b"]="bigcode/starcoderbase-1b"
+py_model_zoo["qwen2.5-coder-0.5b"]="Qwen/Qwen2.5-Coder-0.5B"
+py_model_zoo["qwen2.5-coder-3b"]="Qwen/Qwen2.5-Coder-3B"
+py_model_zoo["qwen2.5-coder-7b"]="Qwen/Qwen2.5-Coder-7B"
 
 # helpful command if we terminate jobs
 # nvidia-smi | grep 'python' | awk '{ print $5 }' | xargs -n1 sudo kill -9
@@ -37,6 +40,9 @@ elif [[ $exp == "cfcrl_rg1" || $exp == "cfcrl_repocoder" || $exp == "cfcrl_oracl
 fi
 
 max_seq_length=2048
+if [[ $model == qwen* ]]; then
+    max_seq_length=8192
+fi
 
 function run() {
     task=$1

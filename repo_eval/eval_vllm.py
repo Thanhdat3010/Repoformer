@@ -12,17 +12,26 @@ from tqdm import tqdm
 import time
 
 
+def get_fim_tokens(model_name):
+    """Return the correct FIM special tokens based on model family."""
+    name = model_name.lower()
+    if 'qwen' in name:
+        return '<|fim_prefix|>', '<|fim_suffix|>', '<|fim_middle|>'
+    return '<fim_prefix>', '<fim_suffix>', '<fim_middle>'
+
+
 def prepare_prompt(tokenizer, task, model_type, left_cxt, right_cxt=None, crossfile_cxt=None):
+    fim_prefix, fim_suffix, fim_middle = get_fim_tokens(args.model_name_or_path)
     if model_type == "codelm_leftright_context":
         left_cxt_truncated = tokenizer.decode(tokenizer.encode(left_cxt)[-(args.max_seq_length - args.gen_length - args.right_context_length):])
         right_cxt_truncated = tokenizer.decode(tokenizer.encode(right_cxt)[:args.right_context_length])
-        prompt = f'<fim_prefix>{left_cxt_truncated}<fim_suffix>{right_cxt_truncated}<fim_middle>'
+        prompt = f'{fim_prefix}{left_cxt_truncated}{fim_suffix}{right_cxt_truncated}{fim_middle}'
     elif model_type == "codelm_right_cfc_left":
         assert crossfile_cxt is not None
         left_cxt_truncated = tokenizer.decode(tokenizer.encode(left_cxt)[-(args.max_seq_length - args.gen_length - args.right_context_length - args.cfc_seq_length):])
         right_cxt_truncated = tokenizer.decode(tokenizer.encode(right_cxt)[:args.right_context_length])
         crossfile_cxt_truncated = tokenizer.decode(tokenizer.encode('\n\n' + crossfile_cxt)[:args.cfc_seq_length])
-        prompt = f'<fim_prefix>{left_cxt_truncated}<fim_suffix>{right_cxt_truncated}{crossfile_cxt_truncated}<fim_middle>'
+        prompt = f'{fim_prefix}{left_cxt_truncated}{fim_suffix}{right_cxt_truncated}{crossfile_cxt_truncated}{fim_middle}'
     else:
         raise NotImplementedError
     return prompt

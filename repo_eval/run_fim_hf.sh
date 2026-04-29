@@ -22,6 +22,9 @@ py_model_zoo["starcoderbase"]="bigcode/starcoderbase"
 py_model_zoo["starcoderbase-7b"]="bigcode/starcoderbase-7b"
 py_model_zoo["starcoderbase-3b"]="bigcode/starcoderbase-3b"
 py_model_zoo["starcoderbase-1b"]="bigcode/starcoderbase-1b"
+py_model_zoo["qwen2.5-coder-0.5b"]="Qwen/Qwen2.5-Coder-0.5B"
+py_model_zoo["qwen2.5-coder-3b"]="Qwen/Qwen2.5-Coder-3B"
+py_model_zoo["qwen2.5-coder-7b"]="Qwen/Qwen2.5-Coder-7B"
 
 declare -A batch_size
 batch_size["starcoder"]=1
@@ -29,6 +32,9 @@ batch_size["starcoderbase"]=1
 batch_size["starcoderbase-7b"]=2
 batch_size["starcoderbase-3b"]=8
 batch_size["starcoderbase-1b"]=16
+batch_size["qwen2.5-coder-0.5b"]=16
+batch_size["qwen2.5-coder-3b"]=4
+batch_size["qwen2.5-coder-7b"]=1
 
 # helpful command if we terminate jobs
 # nvidia-smi | grep 'python' | awk '{ print $5 }' | xargs -n1 sudo kill -9
@@ -45,6 +51,9 @@ elif [[ $exp == "rcfcl_rg1" || $exp == "rcfcl_oracle" ]]; then
 fi
 
 max_seq_length=2048
+if [[ $model == qwen* ]]; then
+    max_seq_length=8192
+fi
 dtype=bf16
 
 function run() {

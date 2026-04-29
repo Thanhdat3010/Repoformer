@@ -38,6 +38,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def get_fim_tokens(model_name):
+    """Return the correct FIM special tokens based on model family."""
+    name = model_name.lower()
+    if 'qwen' in name:
+        return '<|fim_prefix|>', '<|fim_suffix|>', '<|fim_middle|>'
+    # StarCoder / default
+    return '<fim_prefix>', '<fim_suffix>', '<fim_middle>'
+
+
 def custom_data_collator(features):
     first = features[0]
     batch = {}
@@ -83,6 +92,7 @@ def build_datasets(args, tokenizer):
         return features
     
     def prepare_features_fim(examples):
+        fim_prefix, fim_suffix, fim_middle = get_fim_tokens(args.model_name_or_path)
         # first do proper truncation 
         tokenizer.truncation_side = "left"
         tokenized_inputs = tokenizer(
@@ -92,7 +102,7 @@ def build_datasets(args, tokenizer):
             truncation=True,
         )
         # inject fim tokens and redo tokenization
-        input_text = ['<fim_prefix>' + x + '<fim_suffix>' + '<fim_middle>' for x in tokenizer.batch_decode(tokenized_inputs['input_ids'])]
+        input_text = [fim_prefix + x + fim_suffix + fim_middle for x in tokenizer.batch_decode(tokenized_inputs['input_ids'])]
         tokenized_inputs = tokenizer(
             input_text,
             padding="max_length",
@@ -105,6 +115,7 @@ def build_datasets(args, tokenizer):
         return features
     
     def prepare_features_cfc_fim(examples):
+        fim_prefix, fim_suffix, fim_middle = get_fim_tokens(args.model_name_or_path)
         in_file_seq_length = args.max_seq_length - args.right_context_length - args.gen_length
 
         tokenizer.truncation_side = "right"
@@ -121,8 +132,8 @@ def build_datasets(args, tokenizer):
             max_length=in_file_seq_length - 5
         )
 
-        input_text = ['<fim_prefix>' + y + '<fim_suffix>' + x + '<fim_middle>' for x, y in zip(tokenizer.batch_decode(cfc_features['input_ids']),
-                                                                                               tokenizer.batch_decode(infile_seq_features['input_ids']))]
+        input_text = [fim_prefix + y + fim_suffix + x + fim_middle for x, y in zip(tokenizer.batch_decode(cfc_features['input_ids']),
+                                                                                   tokenizer.batch_decode(infile_seq_features['input_ids']))]
         tokenizer.padding_side = "left"
         tokenized_inputs = tokenizer(
             input_text,
@@ -166,6 +177,7 @@ def build_datasets(args, tokenizer):
         return features
     
     def prepare_features_leftright_context_fim(examples):
+        fim_prefix, fim_suffix, fim_middle = get_fim_tokens(args.model_name_or_path)
         in_file_seq_length = args.max_seq_length - args.right_context_length - args.gen_length
 
         tokenizer.truncation_side = "right"
@@ -182,8 +194,8 @@ def build_datasets(args, tokenizer):
             max_length=in_file_seq_length - 10
         )
 
-        input_text = ['<fim_prefix>' + y + '<fim_suffix>' + x + '<fim_middle>' for x, y in zip(tokenizer.batch_decode(right_context_features['input_ids']),
-                                                                                               tokenizer.batch_decode(infile_seq_features['input_ids']))]
+        input_text = [fim_prefix + y + fim_suffix + x + fim_middle for x, y in zip(tokenizer.batch_decode(right_context_features['input_ids']),
+                                                                                   tokenizer.batch_decode(infile_seq_features['input_ids']))]
         tokenizer.padding_side = "left"
         tokenized_inputs = tokenizer(
             input_text,
@@ -262,6 +274,7 @@ def build_datasets(args, tokenizer):
         return features
 
     def prepare_features_right_cfc_left_fim(examples):
+        fim_prefix, fim_suffix, fim_middle = get_fim_tokens(args.model_name_or_path)
         in_file_seq_length = args.max_seq_length - args.cfc_seq_length - args.right_context_length - args.gen_length
 
         tokenizer.truncation_side = "right"
@@ -284,9 +297,9 @@ def build_datasets(args, tokenizer):
             max_length=in_file_seq_length - 10
         )
 
-        input_text = ['<fim_prefix>' + x + z + '<fim_suffix>' + y + '<fim_middle>' for x, y, z in zip(tokenizer.batch_decode(cfc_features['input_ids']), 
-                                                                                                      tokenizer.batch_decode(right_context_features['input_ids']),
-                                                                                                      tokenizer.batch_decode(infile_seq_features['input_ids']))]
+        input_text = [fim_prefix + x + z + fim_suffix + y + fim_middle for x, y, z in zip(tokenizer.batch_decode(cfc_features['input_ids']), 
+                                                                                          tokenizer.batch_decode(right_context_features['input_ids']),
+                                                                                          tokenizer.batch_decode(infile_seq_features['input_ids']))]
         tokenizer.padding_side = "left"
         tokenized_inputs = tokenizer(
             input_text,
@@ -300,8 +313,8 @@ def build_datasets(args, tokenizer):
     
     if args.model_type == "codelm":
         if args.use_fim_prompt:
-            if 'starcoder' not in args.model_name_or_path.lower():
-                print('Warning: unrecognized model name, starcoder prompt is used as default.')
+            if 'starcoder' not in args.model_name_or_path.lower() and 'qwen' not in args.model_name_or_path.lower():
+                print('Warning: unrecognized model name, default FIM prompt is used.')
             prep_function = prepare_features_fim
             tokenized_datasets = raw_datasets.map(
                 prep_function,
@@ -322,8 +335,8 @@ def build_datasets(args, tokenizer):
             )
     elif args.model_type == "codelm_cfc":
         if args.use_fim_prompt:
-            if 'starcoder' not in args.model_name_or_path.lower():
-                print('Warning: unrecognized model name, starcoder prompt is used as default.')
+            if 'starcoder' not in args.model_name_or_path.lower() and 'qwen' not in args.model_name_or_path.lower():
+                print('Warning: unrecognized model name, default FIM prompt is used.')
             prep_function = prepare_features_cfc_fim
             tokenized_datasets = raw_datasets.map(
                 prep_function,
@@ -344,8 +357,8 @@ def build_datasets(args, tokenizer):
             )
     elif args.model_type == "codelm_leftright_context":
         if args.use_fim_prompt:
-            if 'starcoder' not in args.model_name_or_path.lower():
-                print('Warning: unrecognized model name, starcoder prompt is used as default.')
+            if 'starcoder' not in args.model_name_or_path.lower() and 'qwen' not in args.model_name_or_path.lower():
+                print('Warning: unrecognized model name, default FIM prompt is used.')
             prep_function = prepare_features_leftright_context_fim
             tokenized_datasets = raw_datasets.map(
                 prep_function,
@@ -366,8 +379,8 @@ def build_datasets(args, tokenizer):
             )
     elif args.model_type == "codelm_right_cfc_left":
         if args.use_fim_prompt:
-            if 'starcoder' not in args.model_name_or_path.lower():
-                print('Warning: unrecognized model name, starcoder prompt is used as default.')
+            if 'starcoder' not in args.model_name_or_path.lower() and 'qwen' not in args.model_name_or_path.lower():
+                print('Warning: unrecognized model name, default FIM prompt is used.')
             prep_function = prepare_features_right_cfc_left_fim
             tokenized_datasets = raw_datasets.map(
                 prep_function,
@@ -570,6 +583,8 @@ def model_inference(tokenized_datasets, index2taskid, tokenizer):
             generated_texts = tokenizer.batch_decode(batch_pred, skip_special_tokens=False)
             if 'starcoder2' in args.model_name_or_path:
                 generated_texts = [x.split('<file_sep>')[0] for x in generated_texts]
+            elif 'qwen' in args.model_name_or_path.lower():
+                generated_texts = [x.split('<|endoftext|>')[0].split('<|fim_prefix|>')[0].split('<|fim_suffix|>')[0] for x in generated_texts]
             all_preds.extend(generated_texts)
             all_task_ids.extend(batch_task_id.tolist())
             all_batch_latency.extend(cur_batch_latency.tolist() if type(cur_batch_latency.tolist()) != float else [cur_batch_latency.tolist()])
@@ -706,7 +721,28 @@ if __name__ == "__main__":
             else:
                 tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, trust_remote_code=True)
         tokenized_datasets, index2taskid = build_datasets(args, tokenizer)
+
+        # Measure prompt generation time (retrieval + prompt construction)
+        import time as _time
+        _prompt_gen_start = _time.time()
+        _, _ = build_datasets(args, tokenizer)  # timed run
+        _prompt_gen_end = _time.time()
+        _prompt_gen_time_ms = (_prompt_gen_end - _prompt_gen_start) * 1000
+        _avg_prompt_gen_time_ms = _prompt_gen_time_ms / len(tokenized_datasets)
+        logger.info(f"Prompt gen time (total): {_prompt_gen_time_ms:.1f} ms")
+        logger.info(f"Prompt gen time (avg per sample): {_avg_prompt_gen_time_ms:.3f} ms")
+
         model_inference(tokenized_datasets, index2taskid, tokenizer)
+
+        # Save prompt gen time alongside results
+        import json as _json
+        os.makedirs(args.output_dir, exist_ok=True)
+        with open(f"{args.output_dir}/prompt_gen_time.json", 'w') as _f:
+            _f.write(_json.dumps({
+                "total_prompt_gen_time_ms": round(_prompt_gen_time_ms, 2),
+                "avg_prompt_gen_time_ms": round(_avg_prompt_gen_time_ms, 3),
+                "num_samples": len(tokenized_datasets)
+            }, indent=2))
 
     if args.log_uncertainty or args.log_latency:
         assert args.batch_size == 1
