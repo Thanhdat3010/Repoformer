@@ -437,9 +437,10 @@ def model_inference(tokenized_datasets, index2taskid, tokenizer):
     else:
         assert False, f'{args.dtype=} not implemented'
 
-    model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, torch_dtype=dtype, 
-                                                 trust_remote_code=True, 
-                                                 load_in_8bit=True if dtype == torch.int8 else False)
+    load_kwargs = dict(torch_dtype=dtype, trust_remote_code=True)
+    if dtype == torch.int8:
+        load_kwargs['load_in_8bit'] = True
+    model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, **load_kwargs)
     
     # set up speculative decoding
     if args.draft_model:
