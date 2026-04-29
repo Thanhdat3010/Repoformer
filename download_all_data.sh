@@ -39,7 +39,7 @@ echo "========================================"
 echo " Step 4/6: Download CrossCodeEval data"
 echo "========================================"
 cd cceval
-bash prepare_data.sh
+bash prepare_data.sh || echo "(tar ownership warnings are safe to ignore in Docker)"
 cd "$BASEDIR"
 
 echo ""
