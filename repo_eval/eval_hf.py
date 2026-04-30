@@ -50,11 +50,16 @@ def get_fim_tokens(model_name):
 
 
 def custom_data_collator(features):
+    from torch.nn.utils.rnn import pad_sequence
     first = features[0]
     batch = {}
     for k, v in first.items():
         if v is not None and not isinstance(v, str):
-            if isinstance(v, torch.Tensor):
+            if k in ["input_ids", "attention_mask", "labels"]:
+                # Pad sequences to the same length
+                sequences = [torch.tensor(f[k]) if not isinstance(f[k], torch.Tensor) else f[k] for f in features]
+                batch[k] = pad_sequence(sequences, batch_first=True, padding_value=0)
+            elif isinstance(v, torch.Tensor):
                 batch[k] = torch.stack([f[k] for f in features])
             elif isinstance(v, np.ndarray):
                 batch[k] = torch.tensor(np.stack([f[k] for f in features]))
@@ -153,7 +158,7 @@ def build_datasets(args, tokenizer):
 
         tokenizer.truncation_side = "right"
         crossfile_seq_features = tokenizer(
-            examples["crossfile_context"] if type(examples["crossfile_context"][0]) == str else [x['text'] for x in examples["crossfile_context"]],
+            examples["crossfile_context"] if isinstance(examples["crossfile_context"], str) else [x['text'] if isinstance(x, dict) else x for x in examples["crossfile_context"]],
             truncation=True,
             max_length=args.cfc_seq_length
         )
