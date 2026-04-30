@@ -122,7 +122,7 @@ def build_datasets(args, tokenizer):
 
         tokenizer.truncation_side = "right"
         cfc_features = tokenizer(
-            examples["crossfile_context"] if type(examples["crossfile_context"]) == str else [x['text'] for x in examples["crossfile_context"]],
+            examples["crossfile_context"] if isinstance(examples["crossfile_context"], str) else [x['text'] if isinstance(x, dict) else x for x in examples["crossfile_context"]],
             padding=False,
             truncation=True,
             max_length=args.cfc_seq_length - 5

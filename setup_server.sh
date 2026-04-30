@@ -22,12 +22,12 @@ done
 
 # ---- 1. Cài PyTorch (CUDA 12.1) ----
 echo ">>> [1/4] Installing PyTorch..."
-pip install torch==2.4.1 torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cu121
+pip install torch>=2.6.0 torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cu121
 
 # ---- 2. Cài transformers + accelerate ----
 echo ">>> [2/4] Installing transformers + deps..."
-pip install "transformers>=4.45.0" accelerate datasets
-pip install tree-sitter timeout-decorator editdistance
+pip install "torch>=2.6.0" "transformers>=4.45.0" "accelerate>=0.34.0" "datasets>=3.0.0" "tree-sitter<0.22.0"
+pip install timeout-decorator editdistance
 pip install tree-sitter-python tree-sitter-java tree-sitter-c-sharp tree-sitter-typescript
 pip install bitsandbytes scikit-learn rank-bm25
 pip install fuzzywuzzy python-Levenshtein nltk sacrebleu sentencepiece
