@@ -67,7 +67,7 @@ instance/
 .webassets-cache
 
 # Scrapy stuff:
-.scrapy
+# .scrapy
 
 # Sphinx documentation
 docs/_build/
@@ -137,3 +137,14 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Custom Data & Models
+repoformer_all_data.tar.gz
+results/
+repo_eval/processed_data/
+cceval/processed_data/
+cceval/recceval_processed_data/
+repo_eval/data/datasets/
+repo_eval/data/repositories/
+build/
+*.so

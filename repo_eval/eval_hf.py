@@ -43,6 +43,8 @@ def get_fim_tokens(model_name):
     name = model_name.lower()
     if 'qwen' in name:
         return '<|fim_prefix|>', '<|fim_suffix|>', '<|fim_middle|>'
+    if 'deepseek' in name:
+        return '<｜fim begin｜>', '<｜fim end｜>', '<｜fim hole｜>'
     # StarCoder / default
     return '<fim_prefix>', '<fim_suffix>', '<fim_middle>'
 
