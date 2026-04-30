@@ -15,49 +15,45 @@ from typing import List, Callable, Union
 try:
     from tree_sitter import Language, Parser
     from tree_sitter.binding import Node as TSNode
-    _NEW_TS_API = False
 except (ImportError, AttributeError):
     from tree_sitter import Language, Parser
     try:
         from tree_sitter import Node as TSNode
     except ImportError:
         TSNode = object
-    _NEW_TS_API = True
 
 
 def _make_parser(ts_lib, lang_name):
-    """Create a tree-sitter Parser, compatible with both old and new API."""
+    """Create a tree-sitter Parser using the reliable compiled .so files."""
     ts_lang = 'c_sharp' if lang_name == 'csharp' else lang_name
-    if _NEW_TS_API:
-        import importlib
-        _lang_modules = {
-            'python': 'tree_sitter_python',
-            'java': 'tree_sitter_java',
-            'typescript': 'tree_sitter_typescript',
-            'c_sharp': 'tree_sitter_c_sharp',
-        }
-        mod = importlib.import_module(_lang_modules[ts_lang])
-        # Check if mod.language() returns a pointer that needs to be treated as an integer
+    
+    # Always use the reliable compiled .so approach
+    try:
+        language = Language(ts_lib, ts_lang)
+    except Exception as e1:
         try:
-            language = Language(mod.language())
-        except TypeError:
-            # Fallback for newer tree-sitter or different bindings
-            if hasattr(mod, 'language'):
-                language = mod.language()
-            else:
-                raise
-        p = Parser(language)
-    else:
-        # For old tree-sitter-python versions
-        try:
-            language = Language(ts_lib, ts_lang)
-        except:
             import ctypes
             mod = ctypes.cdll.LoadLibrary(ts_lib)
             mod.language.restype = ctypes.c_void_p
-            language = Language(mod.language())
+            # Pass the pointer directly if Language supports it, or instantiate directly
+            try:
+                language = Language(mod.language())
+            except TypeError:
+                # Tree-sitter >= 0.22 accepts Language objects directly if returned natively
+                if hasattr(mod, 'language'):
+                    language = mod.language()
+                else:
+                    raise e1
+        except Exception as e2:
+            raise RuntimeError(f"Failed to load tree-sitter language '{ts_lang}' from '{ts_lib}'. Err1: {e1}. Err2: {e2}")
+
+    try:
         p = Parser()
         p.set_language(language)
+    except TypeError:
+        # In tree-sitter >= 0.22, Parser takes the language directly in constructor
+        p = Parser(language)
+        
     return p
 
 parser = None
