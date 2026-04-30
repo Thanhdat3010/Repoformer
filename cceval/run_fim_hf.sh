@@ -23,6 +23,7 @@ py_model_zoo["starcoderbase-1b"]="bigcode/starcoderbase-1b"
 py_model_zoo["qwen2.5-coder-0.5b"]="Qwen/Qwen2.5-Coder-0.5B"
 py_model_zoo["qwen2.5-coder-3b"]="Qwen/Qwen2.5-Coder-3B"
 py_model_zoo["qwen2.5-coder-7b"]="Qwen/Qwen2.5-Coder-7B"
+py_model_zoo["deepseek-coder-1.3b"]="deepseek-ai/deepseek-coder-1.3b-base"
 
 declare -A batch_size
 batch_size["starcoder"]=1
@@ -33,6 +34,7 @@ batch_size["starcoderbase-1b"]=8
 batch_size["qwen2.5-coder-0.5b"]=8
 batch_size["qwen2.5-coder-3b"]=4
 batch_size["qwen2.5-coder-7b"]=1
+batch_size["deepseek-coder-1.3b"]=8
 
 # helpful command if we terminate jobs
 # nvidia-smi | grep 'python' | awk '{ print $5 }' | xargs -n1 sudo kill -9
