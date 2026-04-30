@@ -24,35 +24,23 @@ except (ImportError, AttributeError):
 
 
 def _make_parser(ts_lib, lang_name):
-    """Create a tree-sitter Parser using the reliable compiled .so files."""
+    """Create a tree-sitter Parser. Uses importlib-based language packages (tree-sitter >= 0.23)."""
     ts_lang = 'c_sharp' if lang_name == 'csharp' else lang_name
-    
-    # Always use the reliable compiled .so approach
-    try:
-        language = Language(ts_lib, ts_lang)
-    except Exception as e1:
-        try:
-            import ctypes
-            mod = ctypes.cdll.LoadLibrary(ts_lib)
-            func_name = f"tree_sitter_{ts_lang}"
-            ts_func = getattr(mod, func_name)
-            ts_func.restype = ctypes.c_void_p
-            ptr = ts_func()
-            try:
-                language = Language(ptr)
-            except TypeError:
-                # Tree-sitter >= 0.22 accepts Language objects directly if returned natively (though ptr is an int)
-                language = ptr
-        except Exception as e2:
-            raise RuntimeError(f"Failed to load tree-sitter language '{ts_lang}' from '{ts_lib}'. Err1: {e1}. Err2: {e2}")
 
-    try:
-        p = Parser()
-        p.set_language(language)
-    except TypeError:
-        # In tree-sitter >= 0.22, Parser takes the language directly in constructor
-        p = Parser(language)
-        
+    # Map language names to their Python package and the function that returns the Language pointer
+    _lang_packages = {
+        'python':     ('tree_sitter_python',     'language'),
+        'java':       ('tree_sitter_java',       'language'),
+        'typescript': ('tree_sitter_typescript',  'language_typescript'),
+        'c_sharp':    ('tree_sitter_c_sharp',     'language'),
+    }
+
+    import importlib
+    pkg_name, func_name = _lang_packages[ts_lang]
+    mod = importlib.import_module(pkg_name)
+    lang_func = getattr(mod, func_name)
+    language = Language(lang_func())
+    p = Parser(language)
     return p
 
 parser = None
