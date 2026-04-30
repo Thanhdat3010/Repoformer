@@ -34,16 +34,15 @@ def _make_parser(ts_lib, lang_name):
         try:
             import ctypes
             mod = ctypes.cdll.LoadLibrary(ts_lib)
-            mod.language.restype = ctypes.c_void_p
-            # Pass the pointer directly if Language supports it, or instantiate directly
+            func_name = f"tree_sitter_{ts_lang}"
+            ts_func = getattr(mod, func_name)
+            ts_func.restype = ctypes.c_void_p
+            ptr = ts_func()
             try:
-                language = Language(mod.language())
+                language = Language(ptr)
             except TypeError:
-                # Tree-sitter >= 0.22 accepts Language objects directly if returned natively
-                if hasattr(mod, 'language'):
-                    language = mod.language()
-                else:
-                    raise e1
+                # Tree-sitter >= 0.22 accepts Language objects directly if returned natively (though ptr is an int)
+                language = ptr
         except Exception as e2:
             raise RuntimeError(f"Failed to load tree-sitter language '{ts_lang}' from '{ts_lib}'. Err1: {e1}. Err2: {e2}")
 
