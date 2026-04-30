@@ -37,10 +37,25 @@ def _make_parser(ts_lib, lang_name):
             'c_sharp': 'tree_sitter_c_sharp',
         }
         mod = importlib.import_module(_lang_modules[ts_lang])
-        language = Language(mod.language())
+        # Check if mod.language() returns a pointer that needs to be treated as an integer
+        try:
+            language = Language(mod.language())
+        except TypeError:
+            # Fallback for newer tree-sitter or different bindings
+            if hasattr(mod, 'language'):
+                language = mod.language()
+            else:
+                raise
         p = Parser(language)
     else:
-        language = Language(ts_lib, ts_lang)
+        # For old tree-sitter-python versions
+        try:
+            language = Language(ts_lib, ts_lang)
+        except:
+            import ctypes
+            mod = ctypes.cdll.LoadLibrary(ts_lib)
+            mod.language.restype = ctypes.c_void_p
+            language = Language(mod.language())
         p = Parser()
         p.set_language(language)
     return p
