@@ -62,7 +62,8 @@ def main():
             "--language", lang,
             "--prompt_file", prompt_path,
             "--output_dir", output_dir,
-            "--ts_lib", f"build/{lang}-lang-parser.so"
+            "--ts_lib", f"build/{lang}-lang-parser.so",
+            "--model_name_or_path", "deepseek-coder-1.3b"
         ]
         
         if "cceval" in pred_path or "recceval" in pred_path:
