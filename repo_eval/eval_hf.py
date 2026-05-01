@@ -407,6 +407,10 @@ def model_inference(tokenized_datasets, index2taskid, tokenizer):
             decoded_outputs = tokenizer.batch_decode(gen_ids, skip_special_tokens=True)
             
             for i, output in enumerate(decoded_outputs):
+                # Manually strip any leaked FIM tokens from DeepSeek
+                output = output.replace('<｜fim begin｜>', '').replace('<｜fim hole｜>', '').replace('<｜fim end｜>', '')
+                output = output.replace('<\uff5cfim begin\uff5c>', '').replace('<\uff5cfim hole\uff5c>', '').replace('<\uff5cfim end\uff5c>', '')
+                
                 sample_idx = batch["index"][i].item()
                 task_id = index2taskid[sample_idx]
                 results.append({
