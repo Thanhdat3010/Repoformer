@@ -220,8 +220,14 @@ def build_datasets(args, tokenizer):
             max_length=in_file_seq_length - 5
         )
 
-        input_text = [fim_prefix + y + fim_suffix + x + fim_middle for x, y in zip(tokenizer.batch_decode(right_context_features['input_ids']),
-                                                                                   tokenizer.batch_decode(infile_seq_features['input_ids']))]
+        if 'deepseek' in args.model_name_or_path.lower():
+            # DeepSeek: <begin>PRE<hole>SUF<end>
+            input_text = [fim_prefix + y + fim_middle + x + fim_suffix for x, y in zip(tokenizer.batch_decode(right_context_features['input_ids']),
+                                                                                       tokenizer.batch_decode(infile_seq_features['input_ids']))]
+        else:
+            # StarCoder: <pre>PRE<suf>SUF<mid>
+            input_text = [fim_prefix + y + fim_suffix + x + fim_middle for x, y in zip(tokenizer.batch_decode(right_context_features['input_ids']),
+                                                                                       tokenizer.batch_decode(infile_seq_features['input_ids']))]
         tokenizer.padding_side = "left"
         tokenized_inputs = tokenizer(
             input_text,
@@ -259,9 +265,16 @@ def build_datasets(args, tokenizer):
             max_length=in_file_seq_length - 5
         )
 
-        input_text = [fim_prefix + y + fim_suffix + z + x + fim_middle for x, y, z in zip(tokenizer.batch_decode(right_context_features['input_ids']),
-                                                                                          tokenizer.batch_decode(infile_seq_features['input_ids']),
-                                                                                          tokenizer.batch_decode(cfc_features['input_ids']))]
+        if 'deepseek' in args.model_name_or_path.lower():
+            # DeepSeek: <begin>PRE<hole>SUF<end>
+            input_text = [fim_prefix + y + fim_middle + z + x + fim_suffix for x, y, z in zip(tokenizer.batch_decode(right_context_features['input_ids']),
+                                                                                              tokenizer.batch_decode(infile_seq_features['input_ids']),
+                                                                                              tokenizer.batch_decode(cfc_features['input_ids']))]
+        else:
+            # StarCoder: <pre>PRE<suf>SUF<mid>
+            input_text = [fim_prefix + y + fim_suffix + z + x + fim_middle for x, y, z in zip(tokenizer.batch_decode(right_context_features['input_ids']),
+                                                                                              tokenizer.batch_decode(infile_seq_features['input_ids']),
+                                                                                              tokenizer.batch_decode(cfc_features['input_ids']))]
         tokenizer.padding_side = "left"
         tokenized_inputs = tokenizer(
             input_text,
