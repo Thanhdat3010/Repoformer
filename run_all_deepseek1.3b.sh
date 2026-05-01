@@ -31,7 +31,7 @@ if [ -f "$prompt_file" ]; then
         --cfc_seq_length 512 \
         --min_cfc_score 0.0 \
         --prompt_file $prompt_file \
-        --gen_length 50 \
+        --gen_length 100 \
         --max_seq_length 4096 \
         --batch_size 8 \
         --output_dir $output_dir \

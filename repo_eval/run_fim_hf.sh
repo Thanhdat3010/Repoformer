@@ -79,9 +79,11 @@ function run() {
     output_dir=$output_dir/$out_dirname
     mkdir -p $output_dir
 
-    gen_length=50
+    gen_length=100
     if [[ $task == "function_completion" ]]; then
         gen_length=256
+    elif [[ $task == "api_completion" ]]; then
+        gen_length=128
     fi
 
     accelerate launch --main_process_port 29512 eval_hf.py \
