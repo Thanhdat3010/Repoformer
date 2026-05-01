@@ -39,7 +39,7 @@ def _make_parser(ts_lib, lang_name):
     pkg_name, func_name = _lang_packages[ts_lang]
     mod = importlib.import_module(pkg_name)
     lang_func = getattr(mod, func_name)
-    language = Language(lang_func())
+    language = lang_func()
     p = Parser(language)
     return p
 
