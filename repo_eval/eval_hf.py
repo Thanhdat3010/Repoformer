@@ -109,7 +109,12 @@ def build_datasets(args, tokenizer):
             truncation=True,
         )
         # inject fim tokens and redo tokenization
-        input_text = [fim_prefix + x + fim_suffix + fim_middle for x in tokenizer.batch_decode(tokenized_inputs['input_ids'])]
+        if 'deepseek' in args.model_name_or_path.lower():
+            # DeepSeek: <begin>PRE<hole>SUF<end>
+            input_text = [fim_prefix + x + fim_middle + "" + fim_suffix for x in tokenizer.batch_decode(tokenized_inputs['input_ids'])]
+        else:
+            # StarCoder/Qwen: <pre>PRE<suf>SUF<mid>
+            input_text = [fim_prefix + x + fim_suffix + fim_middle for x in tokenizer.batch_decode(tokenized_inputs['input_ids'])]
         tokenized_inputs = tokenizer(
             input_text,
             padding="max_length",
@@ -139,8 +144,14 @@ def build_datasets(args, tokenizer):
             max_length=in_file_seq_length - 5
         )
 
-        input_text = [fim_prefix + y + fim_suffix + x + fim_middle for x, y in zip(tokenizer.batch_decode(cfc_features['input_ids']),
-                                                                                   tokenizer.batch_decode(infile_seq_features['input_ids']))]
+        if 'deepseek' in args.model_name_or_path.lower():
+            # DeepSeek: <begin>PRE<hole>SUF<end>
+            input_text = [fim_prefix + y + fim_middle + x + fim_suffix for x, y in zip(tokenizer.batch_decode(cfc_features['input_ids']),
+                                                                                       tokenizer.batch_decode(infile_seq_features['input_ids']))]
+        else:
+            # StarCoder/Qwen: <pre>PRE<suf>SUF<mid>
+            input_text = [fim_prefix + y + fim_suffix + x + fim_middle for x, y in zip(tokenizer.batch_decode(cfc_features['input_ids']),
+                                                                                       tokenizer.batch_decode(infile_seq_features['input_ids']))]
         tokenizer.padding_side = "left"
         tokenized_inputs = tokenizer(
             input_text,
@@ -387,7 +398,7 @@ def model_inference(tokenized_datasets, index2taskid, tokenizer):
                 task_id = index2taskid[sample_idx]
                 results.append({
                     "task_id": task_id,
-                    "completion": output
+                    "pred": output
                 })
 
     # Save results
